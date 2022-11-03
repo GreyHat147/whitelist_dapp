@@ -15,7 +15,7 @@ export default function Home() {
   // numberOfWhitelisted tracks the number of addresses's whitelisted
   const [numberOfWhitelisted, setNumberOfWhitelisted] = useState(0);
   // Create a reference to the Web3 Modal (used for connecting to Metamask) which persists as long as the page is open
-  const web3ModalRef = useRef();
+  const web3ModalRef = useRef<any>();
 
   /**
    * Returns a Provider or Signer object representing the Ethereum RPC with or without the
@@ -33,6 +33,7 @@ export default function Home() {
     // Connect to Metamask
     // Since we store `web3Modal` as a reference, we need to access the `current` value to get access to the underlying object
     const provider = await web3ModalRef.current.connect();
+  
     const web3Provider = new providers.Web3Provider(provider);
 
     // If user is not connected to the Goerli network, let them know and throw an error
@@ -49,13 +50,48 @@ export default function Home() {
     return web3Provider;
   };
 
+  const getProvider = async () => {
+    // Connect to Metamask
+    // Since we store `web3Modal` as a reference, we need to access the `current` value to get access to the underlying object
+    const provider = await web3ModalRef.current.connect();
+  
+    const web3Provider = new providers.Web3Provider(provider);
+
+    // If user is not connected to the Goerli network, let them know and throw an error
+    const { chainId } = await web3Provider.getNetwork();
+    if (chainId !== 5) {
+      window.alert("Change the network to Goerli");
+      throw new Error("Change network to Goerli");
+    }
+    return web3Provider;
+  };
+
+  const getSigner = async () => {
+    // Connect to Metamask
+    // Since we store `web3Modal` as a reference, we need to access the `current` value to get access to the underlying object
+    const provider = await web3ModalRef.current.connect();
+  
+    const web3Provider = new providers.Web3Provider(provider);
+
+    // If user is not connected to the Goerli network, let them know and throw an error
+    const { chainId } = await web3Provider.getNetwork();
+    if (chainId !== 5) {
+      window.alert("Change the network to Goerli");
+      throw new Error("Change network to Goerli");
+    }
+
+    const signer = web3Provider.getSigner();
+    return signer;
+  };
+
+
   /**
    * addAddressToWhitelist: Adds the current connected address to the whitelist
    */
   const addAddressToWhitelist = async () => {
     try {
       // We need a Signer here since this is a 'write' transaction.
-      const signer = await getProviderOrSigner(true);
+      const signer = await getSigner();
       // Create a new instance of the Contract with a Signer, which allows
       // update methods
       const whitelistContract = new Contract(
@@ -84,7 +120,7 @@ export default function Home() {
     try {
       // Get the provider from web3Modal, which in our case is MetaMask
       // No need for the Signer here, as we are only reading state from the blockchain
-      const provider = await getProviderOrSigner();
+      const provider = await getProvider();
       // We connect to the Contract using a Provider, so we will only
       // have read-only access to the Contract
       const whitelistContract = new Contract(
@@ -109,7 +145,7 @@ export default function Home() {
       // We will need the signer later to get the user's address
       // Even though it is a read transaction, since Signers are just special kinds of Providers,
       // We can use it in it's place
-      const signer = await getProviderOrSigner(true);
+      const signer = await getSigner();
       const whitelistContract = new Contract(
         WHITELIST_CONTRACT_ADDRESS,
         abi,
@@ -134,7 +170,7 @@ export default function Home() {
     try {
       // Get the provider from web3Modal, which in our case is MetaMask
       // When used for the first time, it prompts the user to connect their wallet
-      await getProviderOrSigner();
+      await getProvider();
       setWalletConnected(true);
 
       checkIfAddressInWhitelist();
